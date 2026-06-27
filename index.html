@@ -17,19 +17,19 @@
     }
     *{ box-sizing:border-box; }
     html,body{ margin:0; padding:0; }
-    /* 外枠は固定（ページ自体はスクロールさせない） */
-    html,body{ position:fixed; inset:0; overflow:hidden; }
     body{
       background:var(--canvas); color:var(--ink); font-family:var(--font-jp);
       -webkit-font-smoothing:antialiased;
-      display:flex; flex-direction:column;
+      /* 100dvh優先・100vhフォールバック。flexで縦に積む */
+      height:100vh; height:100dvh;
+      display:flex; flex-direction:column; overflow:hidden;
     }
 
     /* ---- frame area ---- */
     .frames{ flex:1 1 auto; min-height:0; position:relative; }
     .frames iframe{
-      display:none; width:100%; border:0; background:var(--canvas);
-      -webkit-overflow-scrolling:touch;   /* 内部の慣性スクロールを許可 */
+      display:none; width:100%; height:100%; border:0; background:var(--canvas);
+      -webkit-overflow-scrolling:touch;   /* 内部の慣性スクロール */
     }
     .frames iframe.active{ display:block; }
 
@@ -57,7 +57,7 @@
 </head>
 <body>
   <div class="frames" id="frames">
-    <!-- 同一オリジン (reservoirdogs1023-spec.github.io) の既存アプリをそのまま表示 -->
+    <!-- 同一オリジン (reservoirdogs1023-spec.github.io) の既存アプリを表示 -->
     <iframe id="f-health" title="ヘルストラッカー" scrolling="yes"
             src="https://reservoirdogs1023-spec.github.io/health-tracker/"></iframe>
     <iframe id="f-task" title="タスクトラッカー" scrolling="yes"
@@ -72,34 +72,19 @@
   <script>
     const frames = { health: document.getElementById('f-health'), task: document.getElementById('f-task') };
     const tabs   = { health: document.getElementById('t-health'), task: document.getElementById('t-task') };
-    const framesEl = document.getElementById('frames');
-
-    // iOSはiframeに明示的なピクセル高さが無いと内部スクロールできないため、
-    // 表示領域ぶんの高さをJSで与える（アドレスバー伸縮にも追従）。
-    function sizeFrames(){
-      const h = framesEl.clientHeight;
-      for (const k in frames) frames[k].style.height = h + 'px';
-    }
 
     function show(tab){
       for (const k in frames){
         frames[k].classList.toggle('active', k === tab);
         tabs[k].classList.toggle('active', k === tab);
       }
-      sizeFrames();
       try { localStorage.setItem('tracker-hub-tab', tab); } catch (e) {}
     }
-
     for (const k in tabs) tabs[k].addEventListener('click', () => show(k));
-
-    window.addEventListener('resize', sizeFrames);
-    window.addEventListener('orientationchange', () => setTimeout(sizeFrames, 200));
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeFrames);
 
     let initial = 'task';
     try { const s = localStorage.getItem('tracker-hub-tab'); if (s === 'health' || s === 'task') initial = s; } catch (e) {}
     show(initial);
-    setTimeout(sizeFrames, 300);   // 初期レイアウト確定後に再計測
   </script>
 </body>
 </html>
